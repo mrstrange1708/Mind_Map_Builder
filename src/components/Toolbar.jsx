@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Trash2, CornerDownRight, Undo2 } from 'lucide-react';
 
-const Toolbar = ({ onAddNode, onDeleteAll, onAddChild, onUndo }) => {
+const Toolbar = ({ onAddNode, onDeleteAll, onUndo }) => {
   return (
     <div style={{
       position: 'fixed',
@@ -22,28 +22,23 @@ const Toolbar = ({ onAddNode, onDeleteAll, onAddChild, onUndo }) => {
       </div>
       <button
         style={buttonStyle}
-        onClick={onAddNode || (() => console.log('Add Node clicked'))}
+        onClick={() => onAddNode?.()}
         title="Add Node"
       >
         <Plus size={20} />
       </button>
       <button
         style={buttonStyle}
-        onClick={onUndo || (() => console.log('Undo clicked'))}
+        onClick={() => onUndo?.()}
         title="Undo"
       >
         <Undo2 size={20} />
       </button>
+
+
       <button
         style={buttonStyle}
-        onClick={onAddChild || (() => console.log('Add Child clicked'))}
-        title="Add Child"
-      >
-        <CornerDownRight size={20} />
-      </button>
-      <button
-        style={buttonStyle}
-        onClick={onDeleteAll || (() => console.log('Delete All clicked'))}
+        onClick={() => onDeleteAll?.()}
         title="Delete All"
       >
         <Trash2 size={20} />

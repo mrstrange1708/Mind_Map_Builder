@@ -1,160 +1,262 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { ReactFlow } from '@xyflow/react';
+"use client";
+import React, { useCallback, useState } from "react";
 import {
-    ReactFlowProvider,
-    addEdge,
-    MiniMap,
-    Controls,
-    Background,
-    NodeToolbar,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { nanoid } from 'nanoid';
-import Toolbar from './components/Toolbar';
-import './App.css';
+  ReactFlow,
+  addEdge,
+  SelectionMode,
+  useEdgesState,
+  useNodesState,
+  MiniMap,
+  Handle,
+  Position,
+  Background,
+  Controls,
+} from "@xyflow/react";
 
-const nodeTypes = {
-  custom: ({ id, data }) => {
-    return (
-      <div style={{ padding: 10, border: '1px solid #777', borderRadius: 5, background: 'white' }}>
-        <div>{data.label}</div>
-        <button onClick={() => data.onAddChild(id)} style={{
-          marginRight: '5px',
-          borderRadius: '50%',
-          width: '30px',
-          height: '30px',
-          fontSize: '20px',
-          lineHeight: '20px',
-          textAlign: 'center',
-          padding: 0,
-        }}>+</button>
-        <button onClick={() => data.onDelete(id)}>Delete</button>
-      </div>
-    );
+import "@xyflow/react/dist/style.css";
+import './index.css';
+import Toolbar from "./components/Toolbar";
+
+export const defaultNodes = [
+  {
+    id: "1",
+    type: "custom",
+    data: { label: `Node` },
+    position: { x: 250, y: 25 },
+  },
+];
+
+export const defaultEdges = [];
+
+const nodeColor = (node) => {
+  switch (node.type) {
+    case "input":
+      return "#2196f3";
+    case "output":
+      return "#2196f3";
+    default:
+      return "#2196f3";
   }
 };
 
-const initialNodes = [];
-const initialEdges = [];
 
-function Flow() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-  const reactFlowInstance = useRef(null);
 
-  const reactFlowWrapper = useRef(null);
+export const CustomNode = ({ data, id, selected }) => {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(data.label);
 
-  const onAddChild = (id) => {
-    console.log("Add child to node:", id);
+  const handleDoubleClick = () => {
+    setEditing(true);
   };
 
-  const onDelete = (id) => {
-    setNodes((nds) => nds.filter((node) => node.id !== id));
-    setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
+  const handleChange = (e) => {
+    setLabel(e.target.value);
   };
 
-  const onNodesChange = useCallback(
-    (changes) => setNodes((nds) => nds.map((node) => {
-      const change = changes.find((c) => c.id === node.id);
-      return change ? { ...node, ...change } : node;
-    })),
-    []
+  const handleBlur = () => {
+    setEditing(false);
+    data.label = label;
+  };
+
+  return (
+    <div
+      className={`relative rounded-md shadow-md transition-all animate-fadeIn ${
+        selected ? "ring-2 ring-blue-400" : ""
+      }`}
+      style={{
+        backgroundColor: "white",
+        padding: "16px",
+        minWidth: "150px",
+        minHeight: "60px",
+      }}
+      onDoubleClick={handleDoubleClick}
+    >
+      {editing ? (
+        <input
+          type="text"
+          value={label}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          autoFocus
+          className="w-full p-2 text-sm border border-blue-400 rounded focus:outline-none"
+        />
+      ) : (
+        <div className="text-gray-800 font-medium">{label}</div>
+      )}
+
+      {selected && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onAddNode(id, 'left');
+            }}
+            className="absolute -left-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white rounded-full w-6 h-6 border-none cursor-pointer flex items-center justify-center hover:bg-blue-600 transition-colors"
+          >
+            +
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onAddNode(id, 'right');
+            }}
+            className="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white rounded-full w-6 h-6 border-none cursor-pointer flex items-center justify-center hover:bg-blue-600 transition-colors"
+          >
+            +
+          </button>
+        </>
+      )}
+
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="a"
+        style={{
+          background: "#2196f3",
+          width: "10px",
+          height: "10px",
+          border: "2px solid white",
+        }}
+        isConnectable={true}
+      />
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="b"
+        style={{
+          background: "#2196f3",
+          width: "10px",
+          height: "10px",
+          border: "2px solid white",
+        }}
+        isConnectable={true}
+      />
+    </div>
+  );
+};
+
+export default function App() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
+
+  const onEdgeClick = useCallback(
+    (event, edge) => {
+      event.stopPropagation();
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    },
+    [setEdges]
   );
 
-  const onEdgesChange = useCallback(
-    (changes) => setEdges((eds) => eds.map((edge) => {
-      const change = changes.find((c) => c.id === edge.id);
-      return change ? { ...edge, ...change } : edge;
-    })),
-    []
-  );
+  const handleAddNode = (parentId, direction = 'right') => {
+    const newNodeId = (nodes.length + 1).toString();
 
-  const onConnect = useCallback((params) => {
-    setEdges((eds) => addEdge(params, eds));
-  }, []);
+    setNodes((nds) => {
+      const parentNode = nds.find((n) => n.id === parentId);
 
-  const handleDoubleClick = useCallback((event) => {
-    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    };
-    const newNode = {
-      id: nanoid(),
-      position,
-      data: { label: 'New Node', onAddChild, onDelete },
-      style: { padding: 10, border: '1px solid #777', borderRadius: 5 },
-      type: 'custom'
-    };
-    setNodes((nds) => nds.concat(newNode));
-  }, [onAddChild, onDelete]);
+      const newNode = {
+        id: newNodeId,
+        type: "custom",
+        data: { label: `Node ${newNodeId}`, onAddNode: handleAddNode },
+        position: {
+          x:
+            direction === 'right'
+              ? (parentNode?.position.x || 0) + 150
+              : (parentNode?.position.x || 0) - 150,
+          y: parentNode?.position.y || 0,
+        },
+      };
 
-  const handleAddNode = useCallback(() => {
-    if (!reactFlowInstance.current) return;
+      return [...nds, newNode];
+    });
+    setEdges((eds) => [
+      ...eds,
+      {
+        id: `e${parentId}-${newNodeId}`,
+        type: "smoothstep",
+        source: parentId,
+        target: newNodeId,
+        animated: true,
+        style: { stroke: "#b1b1b7", strokeWidth: 2 },
+      },
+    ]);
+  };
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const position = reactFlowInstance.current.project({ x: viewportWidth / 2, y: viewportHeight / 2 });
+  const handleUndo = () => {
+    if (nodes.length > 1) {
+      const updatedNodes = [...nodes];
+      const removedNode = updatedNodes.pop();
+      setNodes(updatedNodes);
+      setEdges((eds) => eds.filter((e) => e.source !== removedNode.id && e.target !== removedNode.id));
+    }
+  };
 
-    const newNode = {
-      id: nanoid(),
-      position,
-      data: { label: 'New Node', onAddChild, onDelete },
-      style: { padding: 10, border: '1px solid #777', borderRadius: 5 },
-      type: 'custom',
-    };
-    setNodes((nds) => nds.concat(newNode));
-  }, [onAddChild, onDelete]);
 
   const handleDeleteAll = () => {
     setNodes([]);
     setEdges([]);
   };
 
-  const sanitizedNodes = nodes.map((node) =>
-    node.type === "dimensions" ? { ...node, type: "custom" } : node
+  const onConnect = useCallback(
+    (params) =>
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            type: "smoothstep",
+            animated: true,
+            style: { stroke: "#b1b1b7", strokeWidth: 2 },
+          },
+          eds
+        )
+      ),
+    [setEdges]
   );
 
+  const enhancedNode = nodes.map((node) => ({
+    ...node,
+    data: { ...node.data, onAddNode: handleAddNode },
+  }));
+
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw' }} ref={reactFlowWrapper} onDoubleClick={handleDoubleClick}>
-      <Toolbar 
-        onAddNode={handleAddNode} 
-        onAddChild={onAddChild} 
-        onDeleteAll={handleDeleteAll} 
+    <div style={{ display: "flex", width: "100vw", height: "100vh" }} className="bg-gray-50">
+      <Toolbar
+        onAddNode={() => handleAddNode("1")}
+        onUndo={handleUndo}
+        onDeleteAll={handleDeleteAll}
       />
-      <div style={{ flexGrow: 1, marginLeft: '80px' }}>
+      <div style={{ flexGrow: 1, marginLeft: "80px" }}>
         <ReactFlow
-          nodes={sanitizedNodes}
+          nodes={enhancedNode}
           edges={edges}
-          draggable={true}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onEdgeClick={onEdgeClick}
+          nodeTypes={{ custom: CustomNode }}
           onConnect={onConnect}
-          zoomOnDoubleClick={false}
           fitView
-          panOnDrag
-          zoomOnScroll
-          nodeTypes={nodeTypes}
           panOnScroll
           zoomOnPinch
-          onInit={(instance) => {
-            reactFlowInstance.current = instance;
+          defaultEdgeOptions={{
+            type: "smoothstep",
+            style: { stroke: "#b1b1b7", strokeWidth: 2 },
           }}
         >
-          <MiniMap />
-          <Controls />
-          <NodeToolbar />
-          <Background gap={12} size={1} />
+          <Background color="#aaa" gap={16} size={1} />
+          <MiniMap
+            nodeColor={nodeColor}
+            nodeStrokeWidth={3}
+            zoomable
+            pannable
+            style={{
+              backgroundColor: "#f8f9fa",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+            }}
+          />
+          <Controls showInteractive={false} />
         </ReactFlow>
       </div>
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <ReactFlowProvider>
-      <Flow />
-    </ReactFlowProvider>
   );
 }
