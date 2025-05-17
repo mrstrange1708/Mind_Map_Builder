@@ -1,5 +1,6 @@
-"use client";
+import CustomNode from './components/CustomNode';
 import React, { useCallback, useState } from "react";
+import SignUp from "./components/SignUp";  
 import {
   ReactFlow,
   addEdge,
@@ -16,6 +17,10 @@ import {
 import "@xyflow/react/dist/style.css";
 import './index.css';
 import Toolbar from "./components/Toolbar";
+import { Sun } from 'lucide-react';
+import { Moon } from 'lucide-react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./components/Login";
 
 export const defaultNodes = [
   {
@@ -39,104 +44,8 @@ const nodeColor = (node) => {
   }
 };
 
-
-
-export const CustomNode = ({ data, id, selected }) => {
-  const [editing, setEditing] = useState(false);
-  const [label, setLabel] = useState(data.label);
-
-  const handleDoubleClick = () => {
-    setEditing(true);
-  };
-
-  const handleChange = (e) => {
-    setLabel(e.target.value);
-  };
-
-  const handleBlur = () => {
-    setEditing(false);
-    data.label = label;
-  };
-
-  return (
-    <div
-      className={`relative rounded-md shadow-md transition-all animate-fadeIn ${
-        selected ? "ring-2 ring-blue-400" : ""
-      }`}
-      style={{
-        backgroundColor: "white",
-        padding: "16px",
-        minWidth: "150px",
-        minHeight: "60px",
-      }}
-      onDoubleClick={handleDoubleClick}
-    >
-      {editing ? (
-        <input
-          type="text"
-          value={label}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          autoFocus
-          className="w-full p-2 text-sm border border-blue-400 rounded focus:outline-none"
-        />
-      ) : (
-        <div className="text-gray-800 font-medium">{label}</div>
-      )}
-
-      {selected && (
-        <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onAddNode(id, 'left');
-            }}
-            className="absolute -left-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white rounded-full w-6 h-6 border-none cursor-pointer flex items-center justify-center hover:bg-blue-600 transition-colors"
-          >
-            +
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onAddNode(id, 'right');
-            }}
-            className="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white rounded-full w-6 h-6 border-none cursor-pointer flex items-center justify-center hover:bg-blue-600 transition-colors"
-          >
-            +
-          </button>
-        </>
-      )}
-
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="a"
-        style={{
-          background: "#2196f3",
-          width: "10px",
-          height: "10px",
-          border: "2px solid white",
-        }}
-        isConnectable={true}
-      />
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="b"
-        style={{
-          background: "#2196f3",
-          width: "10px",
-          height: "10px",
-          border: "2px solid white",
-        }}
-        isConnectable={true}
-      />
-    </div>
-  );
-};
-
-export default function App() {
+const MainApp = () => {
+  const [theme, setTheme] = useState('light');
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
 
@@ -219,13 +128,26 @@ export default function App() {
   }));
 
   return (
-    <div style={{ display: "flex", width: "100vw", height: "100vh" }} className="bg-gray-50">
+    <div
+      className={`min-h-screen transition-colors duration-300 ease-in-out flex w-screen h-screen ${
+        theme === 'dark' ? 'bg-black ' : 'bg-gray-500'
+      }`}
+    >
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 rounded-full bg-gray-200 dark:bg-black transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Moon className="w-5 h-5 text-white" /> : <Sun className="w-5 h-5 text-white" />}
+        </button>
+      </div>
       <Toolbar
         onAddNode={() => handleAddNode("1")}
         onUndo={handleUndo}
         onDeleteAll={handleDeleteAll}
       />
-      <div style={{ flexGrow: 1, marginLeft: "80px" }}>
+      <div className="flex-grow ml-30">
         <ReactFlow
           nodes={enhancedNode}
           edges={edges}
@@ -248,15 +170,23 @@ export default function App() {
             nodeStrokeWidth={3}
             zoomable
             pannable
-            style={{
-              backgroundColor: "#f8f9fa",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
+            className="bg-gray-100 border border-gray-300 rounded"
           />
-          <Controls showInteractive={false} />
+          <Controls showInteractive={true} />
         </ReactFlow>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+  <Route path="/" element={<MainApp />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<SignUp />} />
+</Routes>
+    </BrowserRouter>
   );
 }

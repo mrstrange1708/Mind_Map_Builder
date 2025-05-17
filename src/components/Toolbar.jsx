@@ -1,63 +1,50 @@
 import React from 'react';
-import { Plus, Trash2, CornerDownRight, Undo2 } from 'lucide-react';
+import { Plus, Trash2, Undo2 , UserRoundPen } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 const Toolbar = ({ onAddNode, onDeleteAll, onUndo }) => {
+  const navigate = useNavigate();
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      height: '100vh',
-      width: '100px',
-      backgroundColor: '#1a1a1a',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      paddingTop: '20px',
-      boxShadow: '2px 0 5px rgba(0,0,0,0.3)',
-      zIndex: 1000,
-    }}>
-      <div style={{ color: '#fff', fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>
+    <div className="fixed top-0 left-0 h-screen w-[130px] bg-neutral-900 flex flex-col items-center pt-5 shadow-lg z-[1000]">
+      <div className="text-white text-3xl font-bold mb-5 p">
         Cognify
       </div>
       <button
-        style={buttonStyle}
+        className="my-[15px] p-[12px] w-[50px] text-white text-xl bg-neutral-800 rounded-md border-none cursor-pointer transition-colors hover:bg-neutral-700"
         onClick={() => onAddNode?.()}
         title="Add Node"
       >
-        <Plus size={20} />
+        <Plus size={25} />
       </button>
       <button
-        style={buttonStyle}
+        className="my-[15px] p-[12px] w-[50px] text-white text-xl bg-neutral-800 rounded-md border-none cursor-pointer transition-colors hover:bg-neutral-700"
         onClick={() => onUndo?.()}
         title="Undo"
       >
-        <Undo2 size={20} />
+        <Undo2 size={25} />
       </button>
 
 
       <button
-        style={buttonStyle}
+        className="my-[15px] p-[12px] w-[50px] text-white text-xl bg-neutral-800 rounded-md border-none cursor-pointer transition-colors hover:bg-neutral-700"
         onClick={() => onDeleteAll?.()}
         title="Delete All"
       >
-        <Trash2 size={20} />
+        <Trash2 size={25} />
       </button>
+      <div className="mt-auto mb-6">
+        <button
+          className="p-[12px] w-[50px] text-white text-xl bg-neutral-800 rounded-md border-none cursor-pointer transition-colors hover:bg-neutral-700"
+          onClick={() => {
+            navigate("/login");
+          }}
+          title="Login"
+        >
+          <UserRoundPen size={25} />
+        </button>
+      </div>
     </div>
   );
-};
-
-const buttonStyle = {
-  margin: '15px 0',
-  padding: '12px 0',
-  width: '50px',
-  fontSize: '24px',
-  color: '#fff',
-  backgroundColor: '#333',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  transition: 'background-color 0.3s',
 };
 
 export default Toolbar;
