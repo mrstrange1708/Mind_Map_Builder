@@ -1,6 +1,6 @@
 import CustomNode from './components/CustomNode';
 import React, { useCallback, useState } from "react";
-import SignUp from "./components/SignUp";  
+import SignUp from "./components/signup.jsx";  
 import {
   ReactFlow,
   addEdge,
